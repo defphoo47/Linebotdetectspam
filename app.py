@@ -3,10 +3,13 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, FlexSendMessage
 from linebot import LineBotApi, WebhookHandler
 from pythainlp.tokenize import word_tokenize
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 import joblib
 
+#model = keras.models.load_model('thai_spam_naive_bayes_model.pkl')
+
 model = joblib.load('thai_spam_naive_bayes_model.pkl')
-vectorizer = joblib.load('tfidf_vectorizer.pkl')
+tokenizer = joblib.load('tokenizer.pkl')
 
 app = Flask(__name__)
 
@@ -15,13 +18,20 @@ line_bot_api = LineBotApi('3bNl87afW/9Tvtm6Qul5kCWNadqXzCTBxrEUA2pb21oHT8rS8c8qv
 handler = WebhookHandler('2b350201322be0a84b137e8f990971f2')
 
 def predict_spam(text):
-    # ตัดคำภาษาไทย
-    tokens = word_tokenize(text, engine='newmm')
-    text_tfidf = vectorizer.transform([' '.join(tokens)])
-    
-    # ทำนายผล
-    prediction = model.predict(text_tfidf)
-    return "สแปม" if prediction[0] == 1 else "ไม่ใช่สแปม"
+    # ตัดคำและแปลงข้อความเป็น sequence
+    text_tokenized = ' '.join(word_tokenize(text, engine='newmm'))
+    text_seq = tokenizer.texts_to_sequences([text_tokenized])
+
+    # แปลง sequence ให้มีขนาดเท่ากับที่ใช้ในการฝึกโมเดล
+    max_len = 100  # ความยาว sequence ที่ใช้ในการฝึกโมเดล
+    text_pad = pad_sequences(text_seq, maxlen=max_len)
+
+    # ขั้นตอนที่ 3: ทำนายผลลัพธ์ด้วยโมเดล
+    prediction = model.predict(text_pad)
+
+    # แปลงผลลัพธ์ให้อยู่ในรูปแบบของ binary (0 หรือ 1)
+    predicted_label = (prediction > 0.5).astype(int)
+    return "สแปม" if predicted_label == 1 else "ไม่ใช่สแปม"
 
 
 @app.route("/callback", methods=['POST'])
