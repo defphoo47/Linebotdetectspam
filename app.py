@@ -1,6 +1,6 @@
 from flask import Flask, request, abort
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage,FlexSendMessage
 from linebot import LineBotApi, WebhookHandler
 from pythainlp.tokenize import word_tokenize
 from tensorflow.keras.preprocessing.sequence import pad_sequences
