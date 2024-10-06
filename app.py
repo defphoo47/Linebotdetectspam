@@ -67,7 +67,7 @@ def handle_message(event):
                 "type": "bubble",
                 "hero": {
                     "type": "image",
-                    "url": "https://cdn.discordapp.com/attachments/1289990276269473816/1289991201327415416/bot.png?ex=66fad56d&is=66f983ed&hm=800703b9aa397b06b02020d169c596cd935cb87103d18c29b76e33fe5a289517&",  # แทนที่ด้วย URL ของภาพที่ต้องการ
+                    "url": "https://raw.githubusercontent.com/anasedf/AI_Frontend/refs/heads/main/src/assets/bot.jpg",  # แทนที่ด้วย URL ของภาพที่ต้องการ
                     "size": "full",
                     "aspectRatio": "20:13",
                     "aspectMode": "cover"
