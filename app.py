@@ -81,7 +81,8 @@ def handle_message(event):
         if prediction == "สแปม":
             reply_text = f"ข้อความนี้อาจเป็นสแปม: ''{user_message}'' "
         else:
-            reply_text = "ข้อความของคุณไม่เป็นสแปม"
+            #reply_text = "ข้อความของคุณไม่เป็นสแปม"
+            pass
 
         # ตอบกลับผู้ใช้
         line_bot_api.reply_message(
