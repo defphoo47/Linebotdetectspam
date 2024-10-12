@@ -4,10 +4,15 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, FlexSendMessage
 from linebot import LineBotApi, WebhookHandler
 from pythainlp.tokenize import word_tokenize
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 import joblib
+from tensorflow.keras.models import load_model
 
-model = joblib.load('thai_spam_naive_bayes_model.pkl')
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+
+# # โหลดโมเดลจากไฟล์ .h5
+model = load_model('thai_spam_model.h5')
+
 tokenizer = joblib.load('tokenizer.pkl')
 
 app = Flask(__name__)
@@ -18,6 +23,12 @@ CORS(app)
 # ใส่ Channel Access Token และ Channel Secret ที่ได้จาก LINE Developers Console
 line_bot_api = LineBotApi('3bNl87afW/9Tvtm6Qul5kCWNadqXzCTBxrEUA2pb21oHT8rS8c8qviCTaTq9USfTCieDE9AWDx6uHin/D0cp1nzLE3MUTsXghmem9EIVKdAuBUpushZu8ivx8JjQip9bJSp3OyB+kT2/B2TJpCqgagdB04t89/1O/w1cDnyilFU=')
 handler = WebhookHandler('2b350201322be0a84b137e8f990971f2')
+
+# test line bot boy boss
+# line_bot_api = LineBotApi('BgMFKiS/2IjcRMcfcONRNg985dLyhKuzdKHS/hP8npKfmnDoSIJoZYG7hgeq0iojGH+HjxQZ9mOrgnCcyuaaLzYLTAeJ28lpTTNulD3VbM5rw4pYMAyI2pYct8uJXzpvossqcK8raVYuStI66V1bUgdB04t89/1O/w1cDnyilFU=')
+# handler = WebhookHandler('04a92f387c21b8b5713581e8e31bf28f')
+
+
 
 
 def predict_spam(text):
@@ -39,6 +50,7 @@ def predict_spam(text):
     probability = prediction[0][0] if predicted_label == 1 else 1 - prediction[0][0]
     percentage = probability * 100  # แปลงเป็นเปอร์เซ็นต์
     return "สแปม" if predicted_label == 1 else "ไม่ใช่สแปม", round(percentage, 2)  # ปัดเศษ 2 ตำแหน่ง
+
 
 
 @app.route("/callback", methods=['POST'])
@@ -156,15 +168,16 @@ def handle_message(event):
     else: 
         if prediction == "สแปม":
             reply_text = f"ข้อความนี้อาจเป็นสแปม: ''{user_message}'' "
+            # ตอบกลับผู้ใช้
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text=reply_text)
+            )
         else:
             #reply_text = "ข้อความของคุณไม่เป็นสแปม"
             pass
 
-        # ตอบกลับผู้ใช้
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=reply_text)
-        )
+        
 
 # สร้าง API ที่รับข้อมูลจาก front-end และทำนายสแปม
 @app.route('/predict', methods=['POST'])
@@ -175,9 +188,9 @@ def check_spam():
 
     text = data['text']
     prediction, probability = predict_spam(text)
-    
+
     # แปลง label เป็นข้อความที่ต้องการ
-    prediction_text = "Spam" if prediction == 1 else "Not Spam"
+    prediction_text = "Spam" if prediction == "สแปม" else "Not Spam"
     probability_percentage = probability   # เปลี่ยนเป็นเปอร์เซ็นต์
     not_spam_probability = 100 - probability_percentage  # ความน่าจะเป็นที่ไม่ใช่สแปม
 
