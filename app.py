@@ -104,8 +104,9 @@ def handle_message(event):
                         {
                             "type": "text",
                             "text": "KhunThongPhu",
+                            "weight": "bold",
                             "size": "md",
-                            "color": "#666666"
+                            "color": "#8d414c"
                         },
                         {
                             "type": "separator"
