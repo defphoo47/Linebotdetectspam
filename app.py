@@ -5,13 +5,14 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage, FlexSendM
 from linebot import LineBotApi, WebhookHandler
 from pythainlp.tokenize import word_tokenize
 import joblib
-from tensorflow.keras.models import load_model
-
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-
-# # โหลดโมเดลจากไฟล์ .h5
+# Edit 1 : **************************************************EDIT*************************************************
+# โหลดโมเดลจากไฟล์ .h5 แทน .pkl
+from tensorflow.keras.models import load_model
 model = load_model('thai_spam_model.h5')
+# model = joblib.load('thai_spam_naive_bayes_model.pkl') อันเก่า
+# Edit 1 : **************************************************EDIT*************************************************
 
 tokenizer = joblib.load('tokenizer.pkl')
 
@@ -23,12 +24,6 @@ CORS(app)
 # ใส่ Channel Access Token และ Channel Secret ที่ได้จาก LINE Developers Console
 line_bot_api = LineBotApi('3bNl87afW/9Tvtm6Qul5kCWNadqXzCTBxrEUA2pb21oHT8rS8c8qviCTaTq9USfTCieDE9AWDx6uHin/D0cp1nzLE3MUTsXghmem9EIVKdAuBUpushZu8ivx8JjQip9bJSp3OyB+kT2/B2TJpCqgagdB04t89/1O/w1cDnyilFU=')
 handler = WebhookHandler('2b350201322be0a84b137e8f990971f2')
-
-# test line bot boy boss
-# line_bot_api = LineBotApi('BgMFKiS/2IjcRMcfcONRNg985dLyhKuzdKHS/hP8npKfmnDoSIJoZYG7hgeq0iojGH+HjxQZ9mOrgnCcyuaaLzYLTAeJ28lpTTNulD3VbM5rw4pYMAyI2pYct8uJXzpvossqcK8raVYuStI66V1bUgdB04t89/1O/w1cDnyilFU=')
-# handler = WebhookHandler('04a92f387c21b8b5713581e8e31bf28f')
-
-
 
 
 def predict_spam(text):
@@ -47,11 +42,21 @@ def predict_spam(text):
     predicted_label = (prediction > 0.5).astype(int)
 
     # คำนวณความน่าจะเป็น
-    probability = prediction[0][0] if predicted_label == 1 else 1 - prediction[0][0]
+
+    # Edit 2 : **************************************************EDIT*************************************************
+    # จากเงื่อนไข จะทำให้เกิดการกำหนดค่า probability เป็นของ กรณีนั้นๆ(ham / spam)
+    # แต่ตอนนำไปใช้งานต่อจะต้องฟิกว่า ให้ return เป็น probability ของ spam สเมอ
+    # ไม่เช่นนั้น จะเกิดการสลับ ค่า ตอนส่งออกเป็น json
+
+    # probability = prediction[0][0] if predicted_label == 1 else 1 - prediction[0][0] อันเก่า
+    probability = prediction[0][0] # แก้ใหม่ ฟิกเป็น probability ของ spam สเมอ
+
+    # Edit 2 : **************************************************EDIT*************************************************
+
+
     percentage = probability * 100  # แปลงเป็นเปอร์เซ็นต์
     return "สแปม" if predicted_label == 1 else "ไม่ใช่สแปม", round(percentage, 2)  # ปัดเศษ 2 ตำแหน่ง
-
-
+    
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -79,12 +84,12 @@ def handle_message(event):
         
         # สร้าง Flex Message สำหรับเปิด LIFF
         flex_message = FlexSendMessage(
-            alt_text='บอทกากเองจั๊ฟ~',
+            alt_text='ขุนทองภู่เอง~',
             contents={
                 "type": "bubble",
                 "hero": {
                     "type": "image",
-                    "url": "https://raw.githubusercontent.com/anasedf/AI_Frontend/refs/heads/main/src/assets/bot.jpg",  # แทนที่ด้วย URL ของภาพที่ต้องการ
+                    "url": "https://raw.githubusercontent.com/anasedf/AI_Frontend/refs/heads/main/src/assets/pro.jpg",  # แทนที่ด้วย URL ของภาพที่ต้องการ
                     "size": "full",
                     "aspectRatio": "20:13",
                     "aspectMode": "cover"
@@ -95,7 +100,7 @@ def handle_message(event):
                     "contents": [
                         {
                             "type": "text",
-                            "text": "บอทกากสวัสดีจั๊ฟ~",
+                            "text": "ขุนทองภู่สวัสดี~",
                             "weight": "bold",
                             "size": "xl",
                             "margin": "md",
@@ -103,16 +108,17 @@ def handle_message(event):
                         },
                         {
                             "type": "text",
-                            "text": "BotKAK",
+                            "text": "KhunThongPhu",
+                            "weight": "bold",
                             "size": "md",
-                            "color": "#666666"
+                            "color": "#8d414c"
                         },
                         {
                             "type": "separator"
                         },
                         {
                             "type": "text",
-                            "text": "ยินดีที่ได้รู้จัก\nเรียกใช้บอทกากได้ตลอดเลยจั๊ฟ ❤️\nบอทกากช่วยทำได้ไม่กี่อย่างเอง 😭",
+                            "text": "ยินดีที่ได้รู้จัก\nเรียกใช้ขุนทองภู่ได้ตลอดเลยนะ ❤️\n",
                             "wrap": True,
                             "margin": "md",
                             "color": "#000000"
@@ -125,17 +131,17 @@ def handle_message(event):
                             "contents": [
                                 {
                                     "type": "text",
+                                    "text": "• เพิ่มขุนทองภู่ลงในกลุ่มที่ต้องการเช็คเลย",
+                                    "wrap": True
+                                },
+                                {
+                                    "type": "text",
                                     "text": "• ตรวจสอบข้อความว่าเป็นสแปมไหม",
                                     "wrap": True
                                 },
                                 {
                                     "type": "text",
-                                    "text": "• ความจริงก็อยากจะเตะคนทิ้งด้วยแหละ",
-                                    "wrap": True
-                                },
-                                {
-                                    "type": "text",
-                                    "text": "• แต่บอทกากสมชื่อ",
+                                    "text": "• สามารถเยี่ยมชมเว็บไซต์ของเราได้",
                                     "wrap": True
                                 },
                             ]
@@ -151,10 +157,10 @@ def handle_message(event):
                             "style": "primary",
                             "action": {
                                 "type": "uri",
-                                "label": "คลิกเพื่อดูเว็บ BotKAK",
+                                "label": "คลิกเพื่อดูเว็บไซต์ KhunThongPhu",
                                 "uri": liff_url  # แทนที่ด้วย URL ที่ต้องการ
                             },
-                            "color": "#FFBB33"
+                            "color": "#8d414c"
                         }
                     ]
                 }
@@ -165,18 +171,31 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token, flex_message
         )
-    else: 
+    else:
+
+        # Edit 3 : **************************************************EDIT*************************************************
+        # เกิด Bug เมื่อ ไม่ใข้ แสปม ตัวแปร reply_text ไม่ถูกสร้าง
+        # เมื่อข้ามไป ตรง ตอบกลับผู้ใช้ จึง error: reply_text undefine
+
         if prediction == "สแปม":
             reply_text = f"ข้อความนี้อาจเป็นสแปม: ''{user_message}'' "
-            # ตอบกลับผู้ใช้
+
+            # ตอบกลับผู้ใช้ แก้ใหม่
             line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text=reply_text)
             )
+
         else:
             #reply_text = "ข้อความของคุณไม่เป็นสแปม"
             pass
 
+        # ตอบกลับผู้ใช้   อันเก่าอยู่ตรงนี้
+        # line_bot_api.reply_message(
+        #     event.reply_token,
+        #     TextSendMessage(text=reply_text)
+        # )
+        # Edit 3 : **************************************************EDIT*************************************************
         
 
 # สร้าง API ที่รับข้อมูลจาก front-end และทำนายสแปม
@@ -187,10 +206,21 @@ def check_spam():
         return jsonify({'error': 'กรุณาใส่ข้อความที่ต้องการตรวจสอบ'}), 400
 
     text = data['text']
-    prediction, probability = predict_spam(text)
+    prediction, probability = predict_spam(text) # return ["สแปม"/"ไม่ใช่สแปม"]
 
     # แปลง label เป็นข้อความที่ต้องการ
-    prediction_text = "Spam" if prediction == "สแปม" else "Not Spam"
+
+
+    # Edit 4 : **************************************************EDIT*************************************************
+    # เกิด Bug เช็คว่า เป็น spam ตลอดเวลา
+    # predict_spam(text) จะ return ["สแปม"/"ไม่ใช่สแปม"] ไม่ใช่ [0/1]
+    # สาเหตุ : เพราะเงื่อนไข prediction == 1 เป็น การเทียบ (str)["สแปม"/"ไม่ใช่สแปม"] == (int)[1] ให้ผลลัพธฺ์เป็น true เสมอ
+
+    # prediction_text = "Spam" if prediction == 1 else "Not Spam" อันเก่า
+    prediction_text = "Spam" if prediction == "สแปม" else "Not Spam" # แก้ใหม่
+
+    # Edit 4 : **************************************************EDIT*************************************************
+
     probability_percentage = probability   # เปลี่ยนเป็นเปอร์เซ็นต์
     not_spam_probability = 100 - probability_percentage  # ความน่าจะเป็นที่ไม่ใช่สแปม
 
